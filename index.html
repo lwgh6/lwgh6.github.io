@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+  <html>
+    <head></head>
+    <body>
+      <table border="1" cellpadding = "20" cellspacing="0">
+        <tr>
+          <th>网站名称</th>
+          <th>网站地址</th>
+        </tr>
+        <tr>
+          <td>淘宝</td>
+          <td>https://www.taobao.com/</td>
+        </tr>
+		 <tr>
+          <td>京东</td>
+          <td>http://www.jingdong.com</td>
+        </tr>
+		 <tr>
+          <td>新浪</td>
+          <td>https://www.sina.com.cn/</td>
+        </tr> 
+		<tr>
+          <td>百度</td>
+          <td>https://www.baidu.com/</td>
+        </tr>
+      </table>
+     <p>当前日期：<span id="dateDom"></span></p>
+	<p>当前时间：<span id="timeDom"></span></p>
+	<script type="text/javascript">
+		var dom =document.getElementById('dateDom')
+		var time =new Date().toJSON().slice(0,10)
+		dom.innerHTML = time
+	</script>
+	<script type="text/javascript">
+		
+		var timeDom = document.getElementById('timeDom')
+		getTime()
+		setInterval(function(){getTime()},1000)
+		function getTime(){
+			var date = new Date()
+			var hours =date.getHours()
+			var minutes = date.getMinutes()
+			var seconds = date.getSeconds()
+			var time = hours+':'+minutes+':'+seconds
+			timeDom.innerHTML = time
+		}
+	</script>
+</body>
+  </html>
