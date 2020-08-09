@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">   
+		<title></title>
+	</head>
+	<body>
+	<div>
+	<h1>致我最亲爱的老婆:燕</h1>
+	</div>
+		<div class="box1">
+			1. 你走之后，没人再嫌弃我瘦，也没人再关心我的感受，你走之后，我的生活只剩下将就。
+		</div>
+
+		<div class="box2">
+			2. 好不容易才让你愿意住进我的心里，为何我却不懂事的总是惹你生气，恨自己不懂得爱护你，后悔分手的时候没能拉住你。
+		</div>
+		<div class="box3">
+			3. 再给我一次机会，我不再会怕苦怕累，我明白自己并不完美，但以后的日子，我会爱你爱的更加纯粹。
+		</div>
+		<div>
+	<h6>不要不理我喽</h6>
+	</div>
+	</body>
+<!-- 	<script src="https://code.jquery.com/jquery-latest.js"></script> -->
+<script src="https://cdn.bootcss.com/jquery/3.4.0/jquery.min.js"></script>
+	<script type="text/javascript">
+	$(function(){
+		//获取三个div
+		var divs=$('div')
+		//添加随机颜色函数
+		function getRandomColor(){
+			return Math.floor(Math.random()*(256));
+		}
+		//利用定时器循环执行
+		setInterval(function(){
+			divs.each(function(index, el) {
+				$(el).css('color','rgb('+getRandomColor()+','+getRandomColor()+','+getRandomColor()+')')
+			})
+		},1000)
+
+	})
+	</script>
+	</html>
