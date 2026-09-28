@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="6BQkYlSQD4QK7nHvZ5wh2l">
+<head data-page-node-id="hCOqoHVSDjVOp6RC32GHBa">
+<meta charset="UTF-8" data-page-node-id="xOYQfO1KknS0cOk71CW5PL">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="nzn2ZlO6qevvMdFZmv3XGn">
+<title>大亨的图片分割器</title>
+<style>
+  :root {
+    --orange: #f97316;
+    --orange-light: #ffedd5;
+    --orange-soft: #fff7ed;
+    --text: #1f2937;
+    --text-sub: #9ca3af;
+    --border: #e5e7eb;
+    --bg: #fffdf9;
+    --radius: 14px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(160deg, #fff8ef 0%, var(--bg) 40%, #fdf6ec 100%);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 28px 20px 60px;
+  }
+  .header { text-align: center; margin-bottom: 26px; }
+  .header h1 {
+    font-size: 30px;
+    letter-spacing: 1px;
+    background: linear-gradient(90deg, #f97316, #fb923c);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    display: inline-block;
+  }
+  .header h1 .logo {
+    width: 30px;
+    height: 30px;
+    vertical-align: -7px;
+    margin-right: 9px;
+    color: var(--orange);
+    -webkit-text-fill-color: initial;
+  }
+  .header p { color: var(--text-sub); font-size: 14px; margin-top: 6px; }
+  .header p b { color: var(--orange); font-weight: 600; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 22px;
+    max-width: 1200px;
+    margin: 0 auto;
+    align-items: start;
+  }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+  .card {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: 0 4px 20px rgba(249, 115, 22, .08);
+    padding: 22px;
+  }
+  .card + .card { margin-top: 18px; }
+  .card-title {
+    font-size: 16px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .card-title .ico {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    background: var(--orange-light);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+  }
+
+  /* 上传区 */
+  .dropzone {
+    border: 2px dashed #fdba74;
+    border-radius: 12px;
+    background: var(--orange-soft);
+    padding: 34px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .dropzone:hover, .dropzone.dragover {
+    background: var(--orange-light);
+    border-color: var(--orange);
+    transform: translateY(-2px);
+  }
+  .dropzone .big-ico { font-size: 40px; }
+  .dropzone .main { font-size: 15px; font-weight: 600; margin-top: 10px; color: var(--orange); }
+  .dropzone .sub { font-size: 12px; color: var(--text-sub); margin-top: 4px; }
+  .thumb-preview {
+    display: none;
+    width: 100%;
+    border-radius: 10px;
+    margin-top: 4px;
+  }
+  .file-info {
+    display: none;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--text-sub);
+  }
+  .file-info .btn-clear {
+    color: #ef4444;
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-size: 12px;
+  }
+
+  /* 设置 */
+  .setting-row { margin-bottom: 18px; }
+  .setting-row .label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+  .setting-row .label .val {
+    color: var(--orange);
+    font-weight: 700;
+    font-size: 18px;
+  }
+  input[type=range] {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 6px;
+    border-radius: 3px;
+    background: #374151;
+    outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--orange);
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,.25);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--orange);
+    cursor: pointer;
+    border: none;
+  }
+
+  .presets { display: flex; gap: 10px; margin-bottom: 18px; }
+  .presets .p-label { width: 100%; font-size: 13px; color: var(--text-sub); margin-bottom: 8px; }
+  .preset-btn {
+    flex: 1;
+    padding: 8px 0;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all .15s;
+    color: var(--text);
+  }
+  .preset-btn:hover { border-color: var(--orange); color: var(--orange); }
+  .preset-btn.active {
+    background: var(--orange-light);
+    border-color: var(--orange);
+    color: var(--orange);
+    font-weight: 700;
+  }
+
+  .switch-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    padding: 8px 0;
+  }
+  .switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider-ui {
+    position: absolute;
+    inset: 0;
+    background: #d1d5db;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: .2s;
+  }
+  .slider-ui::before {
+    content: "";
+    position: absolute;
+    width: 18px; height: 18px;
+    left: 3px; top: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: .2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  }
+  .switch input:checked + .slider-ui { background: var(--orange); }
+  .switch input:checked + .slider-ui::before { transform: translateX(20px); }
+
+  .btn {
+    width: 100%;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 0;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .15s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-reset {
+    background: var(--orange-light);
+    color: var(--orange);
+    margin-bottom: 12px;
+    padding: 10px 0;
+    font-size: 14px;
+  }
+  .btn-reset:hover:not(:disabled) { background: #fed7aa; }
+  .btn-primary {
+    background: linear-gradient(90deg, #f97316, #fb923c);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(249, 115, 22, .35);
+  }
+  .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(249, 115, 22, .4); }
+  .btn-ghost {
+    background: #fff;
+    border: 1.5px solid var(--orange);
+    color: var(--orange);
+    padding: 11px 0;
+    font-size: 15px;
+    margin-top: 12px;
+  }
+  .btn-ghost:hover:not(:disabled) { background: var(--orange-soft); }
+
+  /* 预览区 */
+  .preview-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+  .preview-wrap {
+    position: relative;
+    background: #fafafa;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    min-height: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .placeholder { color: #c7c7c7; font-size: 15px; }
+  #canvasBox { position: relative; display: none; max-width: 100%; }
+  #previewCanvas { display: block; max-width: 100%; max-height: 62vh; border-radius: 8px; }
+  .split-line {
+    position: absolute;
+    background: var(--orange);
+    z-index: 5;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.7);
+  }
+  .split-line::after {
+    content: "";
+    position: absolute;
+    background: transparent;
+  }
+  .split-line.v { width: 3px; top: 0; bottom: 0; cursor: col-resize; }
+  .split-line.v::after { left: -7px; right: -7px; top: 0; bottom: 0; }
+  .split-line.h { height: 3px; left: 0; right: 0; cursor: row-resize; }
+  .split-line.h::after { top: -7px; bottom: -7px; left: 0; right: 0; }
+
+  /* 结果 */
+  #resultSection { display: none; }
+  .result-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .result-head .title { font-size: 16px; font-weight: 700; }
+  .result-head .btn-zip {
+    width: auto;
+    padding: 9px 18px;
+    font-size: 14px;
+  }
+  .result-grid {
+    display: grid;
+    gap: 14px;
+  }
+  .piece {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+    transition: all .15s;
+  }
+  .piece:hover { box-shadow: 0 4px 14px rgba(0,0,0,.1); transform: translateY(-2px); }
+  .piece img { display: block; width: 100%; height: auto; }
+  .piece .piece-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: var(--text-sub);
+  }
+  .piece .dl {
+    color: var(--orange);
+    border: 1px solid var(--orange);
+    background: #fff;
+    border-radius: 8px;
+    padding: 4px 12px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .piece .dl:hover { background: var(--orange); color: #fff; }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 40px;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(31,41,55,.92);
+    color: #fff;
+    padding: 10px 22px;
+    border-radius: 24px;
+    font-size: 14px;
+    opacity: 0;
+    pointer-events: none;
+    transition: all .25s;
+    z-index: 99;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body data-page-node-id="FBMoEjTPshGmi4WhSx3kgv">
+
+<div class="header" data-page-node-id="XFAKEv57RQoKqzKrzmgqSK">
+  <h1 data-page-node-id="LsIHzOAV6FdgR63lrU1QDZ">
+    <svg class="logo" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 11 L6.6 2.2"/>
+      <path d="M12 11 L17.4 2.2"/>
+      <path d="M12 11 L8.2 16.6"/>
+      <path d="M12 11 L15.8 16.6"/>
+      <circle cx="7.2" cy="18.6" r="2.7"/>
+      <circle cx="16.8" cy="18.6" r="2.7"/>
+    </svg>大亨的图片分割器
+  </h1>
+  <p data-page-node-id="wqli3C8VFna5hKTCQ3Ovyq">上传图片，支持<b data-page-node-id="xjVvcq0mAzvgp2m5hWzqp6">均分切割</b> + <b data-page-node-id="XdwEoxOs91AFbzXqGOLruM">自由拖拽调整分割线</b></p>
+</div>
+
+<div class="layout" data-page-node-id="p2EWlQiYhoqLdSudOthHaA">
+  <!-- 左侧 -->
+  <div data-page-node-id="Y3c7ogPQLKJbgl3ahDLrzJ">
+    <div class="card" data-page-node-id="kJ1PccxDi6iA3Jmmru2lg5">
+      <div class="card-title" data-page-node-id="9VcLcRxipxytnB5z8fZefv"><span class="ico" data-page-node-id="BsOj9dKBqAu5maK4kRoqDV">📤</span>上传图片</div>
+      <div class="dropzone" id="dropzone" data-page-node-id="ESMA2khk6bnNmlEdNG4av1">
+        <div class="big-ico" data-page-node-id="sb7TfVA321GCIzne5PmEMW">🖼️</div>
+        <div class="main" data-page-node-id="I9rlcTFDKNl4QjNUgWO1iI">点击或拖拽图片到此处</div>
+        <div class="sub" data-page-node-id="btMTYZ8HsS18B4L2qaaiih">支持 JPG、PNG、WebP 格式</div>
+        <img id="thumbPreview" class="thumb-preview" alt="缩略图" data-page-node-id="xEXpmx9Qi9sM5gIHPJzZbB">
+        <input type="file" id="fileInput" accept="image/*" hidden data-page-node-id="UC1OXg6q9sCFGD9W2G6Evt">
+      </div>
+      <div class="file-info" id="fileInfo" data-page-node-id="3VB0yW0tTHlaBjcnF53Gg8">
+        <span id="fileName" data-page-node-id="0SlJ01CumdMH6t32vRzyKL"></span>
+        <button class="btn-clear" id="btnClear" data-page-node-id="UxZOSOZNOzz5oybjVCwNvg">✕ 移除图片</button>
+      </div>
+    </div>
+
+    <div class="card" data-page-node-id="ZBrtav3n1y0LcV6rThSRp1">
+      <div class="card-title" data-page-node-id="G0QC8TAAeRVOW2MBPkuf3W"><span class="ico" data-page-node-id="ptfQDilYDARk30ilNxDAGy">⚙️</span>分割设置</div>
+
+      <div class="setting-row" data-page-node-id="y57EIxpL8Fp2xGbCGrhbbH">
+        <div class="label" data-page-node-id="FKm0Y6n7UX2aGNGkcgFxBp"><span data-page-node-id="CZpW57HW4GJCjGzdrIUlr3">行数（横向切割）</span><span class="val" id="rowsVal" data-page-node-id="opHRUu0XLSPAeJBuvw33tK">3</span></div>
+        <input type="range" id="rowsRange" min="1" max="10" value="3" data-page-node-id="ZtQFBt58W5szItO63pOqBx">
+      </div>
+
+      <div class="setting-row" data-page-node-id="8TPWF2Em46wKkEQPpN3jvY">
+        <div class="label" data-page-node-id="et3kHb70G5IzM9a15CDeBj"><span data-page-node-id="Kh4atCFKK6ytvrjIytiRDW">列数（纵向切割）</span><span class="val" id="colsVal" data-page-node-id="XfftMYr4RtHqnG3I6ZnBS7">3</span></div>
+        <input type="range" id="colsRange" min="1" max="10" value="3" data-page-node-id="I0JDVF4H16cIGWZAQKWXFC">
+      </div>
+
+      <div class="setting-row" data-page-node-id="3pJCWishSvk1HhhoD2mXCw">
+        <div class="p-label" data-page-node-id="JRXn9Q7Dbc9ZaLdfit1PUv">快捷预设</div>
+        <div class="presets" data-page-node-id="2D8M6xqnImLQOJpPzZ1YGW">
+          <button class="preset-btn" data-r="1" data-c="2" data-page-node-id="Yr16aPxqNwbEG0jaGOzC1q">1×2</button>
+          <button class="preset-btn" data-r="2" data-c="2" data-page-node-id="Tdhw17AuLUpyNwwqU3GgaE">2×2</button>
+          <button class="preset-btn active" data-r="3" data-c="3" data-page-node-id="ATfjq69F2svOyucn34QReZ">3×3</button>
+          <button class="preset-btn" data-r="4" data-c="4" data-page-node-id="ORfMcAptdq2gJ6OKI8BbhI">4×4</button>
+        </div>
+      </div>
+
+      <div class="switch-row" data-page-node-id="wbiGyzo1tUZXPGFfHiGdlI">
+        <span data-page-node-id="LpHvmWu12us3wUDD108Dob">显示分割线</span>
+        <label class="switch" data-page-node-id="dj1nVvD9lEN88QFxeP8TyC"><input type="checkbox" id="showLines" checked data-page-node-id="Wp5B7RgaleuFSDCnnjQgP2"><span class="slider-ui" data-page-node-id="Tab5lHMS9RfZcRDRJN2ydn"></span></label>
+      </div>
+      <div class="switch-row" data-page-node-id="gVNau6XsN2faLuSeSUwDiV">
+        <span data-page-node-id="qd9XT2rlvSHCVerlNKCz9T">启用拖拽调整</span>
+        <label class="switch" data-page-node-id="ZvAcb6iR5tUKXAXUc9WtmG"><input type="checkbox" id="enableDrag" checked data-page-node-id="qN8RaemE8WRC0NjbHLUzy3"><span class="slider-ui" data-page-node-id="5PesGD4sOr8VpyiV5qVhdE"></span></label>
+      </div>
+
+      <button class="btn btn-reset" id="btnReset" disabled data-page-node-id="5WFXBukvdd94RnfZNXPFYW">🔄 重置为均分分割线</button>
+      <button class="btn btn-primary" id="btnSplit" disabled data-page-node-id="AwrQSShyBedgtiE8Uk91hQ">✂ 开始分割</button>
+      <button class="btn btn-ghost" id="btnZipLeft" disabled data-page-node-id="QF9EQ7NB8AB8heBhMMnqMQ">🗂️ 打包下载全部（ZIP）</button>
+    </div>
+  </div>
+
+  <!-- 右侧 -->
+  <div data-page-node-id="oHDmEYdJ94TvuSoFoiq7Cs">
+    <div class="card" data-page-node-id="Vos8jlKuq8zkczt8yBMM4a">
+      <div class="preview-head" data-page-node-id="HSqCdEDnUBKHFW1cRY5D3G">👁️ 原图预览（可拖拽分割线）</div>
+      <div class="preview-wrap" id="previewWrap" data-page-node-id="lrlPNIuTFxgTP2V7DKksZX">
+        <div class="placeholder" id="placeholder" data-page-node-id="RnRAyBU5mwoLuDiqaBgvkd">请先上传图片</div>
+        <div id="canvasBox" data-page-node-id="fjVGF8z5V0KWVgo1hrjhUg">
+          <canvas id="previewCanvas" data-page-node-id="lRHLJtZ48Ave1bGXlZHRaB"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="resultSection" data-page-node-id="vLPZpYhRwM4AZZcChQ40aq">
+      <div class="result-head" data-page-node-id="eOnHU26CIHH6DTUG3r5iUh">
+        <div class="title" data-page-node-id="rGGG1YRs7ZCBGvVqhcE6oh">📦 分割结果</div>
+        <button class="btn btn-primary btn-zip" id="btnZip" data-page-node-id="0lGBDeIISb2gbnwsArvgHx">⬇ 打包下载 ZIP</button>
+      </div>
+      <div class="result-grid" id="resultGrid" data-page-node-id="FMDZIreMmxcYhu08JiPQSo"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" data-page-node-id="GIQw4wVEQUMjizrZGLH0VT"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var img = null;          // 原始 Image 对象
+  var imgName = "image";
+  var rows = 3, cols = 3;
+  var vLines = [];         // 纵向分割线（列分割），比例 0~1，不含 0 和 1
+  var hLines = [];         // 横向分割线（行分割）
+
+  var $ = function (id) { return document.getElementById(id); };
+  var dropzone = $("dropzone"), fileInput = $("fileInput");
+  var thumbPreview = $("thumbPreview"), fileInfo = $("fileInfo"), fileName = $("fileName");
+  var canvasBox = $("canvasBox"), canvas = $("previewCanvas"), placeholder = $("placeholder");
+  var ctx = canvas.getContext("2d");
+  var toast = $("toast");
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add("show");
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(function () { toast.classList.remove("show"); }, 1800);
+  }
+
+  /* ---------- 上传 ---------- */
+  dropzone.addEventListener("click", function () { fileInput.click(); });
+  fileInput.addEventListener("change", function () {
+    if (fileInput.files.length) loadFile(fileInput.files[0]);
+  });
+  ["dragover", "dragenter"].forEach(function (ev) {
+    dropzone.addEventListener(ev, function (e) {
+      e.preventDefault();
+      dropzone.classList.add("dragover");
+    });
+  });
+  ["dragleave", "drop"].forEach(function (ev) {
+    dropzone.addEventListener(ev, function (e) {
+      e.preventDefault();
+      dropzone.classList.remove("dragover");
+    });
+  });
+  dropzone.addEventListener("drop", function (e) {
+    if (e.dataTransfer.files.length) loadFile(e.dataTransfer.files[0]);
+  });
+
+  function loadFile(file) {
+    if (!file.type || file.type.indexOf("image") !== 0) {
+      showToast("请选择图片文件（JPG / PNG / WebP）");
+      return;
+    }
+    var url = URL.createObjectURL(file);
+    var image = new Image();
+    image.onload = function () {
+      img = image;
+      imgName = file.name.replace(/\.[^.]+$/, "") || "image";
+      thumbPreview.src = url;
+      thumbPreview.style.display = "block";
+      dropzone.querySelector(".big-ico").style.display = "none";
+      dropzone.querySelector(".main").style.display = "none";
+      dropzone.querySelector(".sub").style.display = "none";
+      fileInfo.style.display = "flex";
+      fileName.textContent = file.name + "（" + image.naturalWidth + "×" + image.naturalHeight + "）";
+      resetLines();
+      updateButtons();
+      drawPreview();
+      showToast("图片已加载");
+    };
+    image.onerror = function () { showToast("图片加载失败，请换一张试试"); };
+    image.src = url;
+  }
+
+  $("btnClear").addEventListener("click", function (e) {
+    e.stopPropagation();
+    img = null;
+    thumbPreview.src = "";
+    thumbPreview.style.display = "none";
+    dropzone.querySelector(".big-ico").style.display = "";
+    dropzone.querySelector(".main").style.display = "";
+    dropzone.querySelector(".sub").style.display = "";
+    fileInfo.style.display = "none";
+    canvasBox.style.display = "none";
+    placeholder.style.display = "";
+    $("resultSection").style.display = "none";
+    window._pieces = [];
+    fileInput.value = "";
+    updateButtons();
+  });
+
+  /* ---------- 设置 ---------- */
+  function syncRowsCols() {
+    rows = parseInt($("rowsRange").value, 10);
+    cols = parseInt($("colsRange").value, 10);
+    $("rowsVal").textContent = rows;
+    $("colsVal").textContent = cols;
+    document.querySelectorAll(".preset-btn").forEach(function (b) {
+      b.classList.toggle("active",
+        parseInt(b.dataset.r, 10) === rows && parseInt(b.dataset.c, 10) === cols);
+    });
+    if (img) { resetLines(); drawPreview(); }
+  }
+  $("rowsRange").addEventListener("input", syncRowsCols);
+  $("colsRange").addEventListener("input", syncRowsCols);
+
+  document.querySelectorAll(".preset-btn").forEach(function (b) {
+    b.addEventListener("click", function () {
+      $("rowsRange").value = b.dataset.r;
+      $("colsRange").value = b.dataset.c;
+      syncRowsCols();
+    });
+  });
+
+  $("showLines").addEventListener("change", drawPreview);
+  $("enableDrag").addEventListener("change", function () {
+    renderLines();
+  });
+
+  $("btnReset").addEventListener("click", function () {
+    if (!img) return;
+    resetLines();
+    drawPreview();
+    showToast("已重置为均分分割线");
+  });
+
+  function resetLines() {
+    vLines = [];
+    hLines = [];
+    for (var c = 1; c < cols; c++) vLines.push(c / cols);
+    for (var r = 1; r < rows; r++) hLines.push(r / rows);
+  }
+
+  function updateButtons() {
+    $("btnReset").disabled = !img;
+    $("btnSplit").disabled = !img;
+    $("btnZipLeft").disabled = true; // 分割后才可用
+  }
+
+  /* ---------- 画布预览 ---------- */
+  function drawPreview() {
+    if (!img) return;
+    placeholder.style.display = "none";
+    canvasBox.style.display = "block";
+
+    var maxW = canvasBox.parentElement.clientWidth - 2;
+    var maxH = window.innerHeight * 0.62;
+    var scale = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight, 1);
+    canvas.width = Math.round(img.naturalWidth * scale);
+    canvas.height = Math.round(img.naturalHeight * scale);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    renderLines();
+  }
+
+  function renderLines() {
+    canvasBox.querySelectorAll(".split-line").forEach(function (el) { el.remove(); });
+    var show = $("showLines").checked;
+    var draggable = $("enableDrag").checked;
+    if (!img || !show) return;
+
+    vLines.forEach(function (p, i) {
+      var el = document.createElement("div");
+      el.className = "split-line v";
+      el.style.left = (p * canvas.clientWidth - 1.5) + "px";
+      el.dataset.type = "v";
+      el.dataset.idx = i;
+      if (draggable) makeDraggable(el, "v", i);
+      canvasBox.appendChild(el);
+    });
+    hLines.forEach(function (p, i) {
+      var el = document.createElement("div");
+      el.className = "split-line h";
+      el.style.top = (p * canvas.clientHeight - 1.5) + "px";
+      el.dataset.type = "h";
+      el.dataset.idx = i;
+      if (draggable) makeDraggable(el, "h", i);
+      canvasBox.appendChild(el);
+    });
+  }
+
+  function makeDraggable(el, type, idx) {
+    el.addEventListener("mousedown", function (e) { startDrag(e, type, idx); });
+    el.addEventListener("touchstart", function (e) {
+      startDrag(e.touches[0], type, idx);
+      e.preventDefault();
+    }, { passive: false });
+  }
+
+  function startDrag(e, type, idx) {
+    e.preventDefault();
+    var rect = canvas.getBoundingClientRect();
+    function onMove(ev) {
+      var clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+      var clientY = ev.touches ? ev.touches[0].clientY : ev.clientY;
+      var lines = (type === "v") ? vLines : hLines;
+      var lo = (idx === 0) ? 0.02 : lines[idx - 1] + 0.02;
+      var hi = (idx === lines.length - 1) ? 0.98 : lines[idx + 1] - 0.02;
+      var p = (type === "v")
+        ? (clientX - rect.left) / rect.width
+        : (clientY - rect.top) / rect.height;
+      lines[idx] = Math.min(hi, Math.max(lo, p));
+      drawPreview();
+    }
+    function onUp() {
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+      document.removeEventListener("touchmove", onMove);
+      document.removeEventListener("touchend", onUp);
+    }
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+    document.addEventListener("touchmove", onMove, { passive: false });
+    document.addEventListener("touchend", onUp);
+  }
+
+  /* ---------- 分割 ---------- */
+  function getCutPoints(lines, total) {
+    var pts = [0];
+    lines.forEach(function (p) { pts.push(Math.round(p * total)); });
+    pts.push(total);
+    return pts;
+  }
+
+  $("btnSplit").addEventListener("click", function () {
+    if (!img) return;
+    var xs = getCutPoints(vLines, img.naturalWidth);
+    var ys = getCutPoints(hLines, img.naturalHeight);
+    var grid = $("resultGrid");
+    grid.innerHTML = "";
+
+    var rCount = ys.length - 1, cCount = xs.length - 1;
+    grid.style.gridTemplateColumns = "repeat(" + cCount + ", 1fr)";
+
+    window._pieces = [];
+    for (var r = 0; r < rCount; r++) {
+      for (var c = 0; c < cCount; c++) {
+        var w = xs[c + 1] - xs[c], h = ys[r + 1] - ys[r];
+        if (w < 1 || h < 1) continue;
+        var pieceCanvas = document.createElement("canvas");
+        pieceCanvas.width = w;
+        pieceCanvas.height = h;
+        pieceCanvas.getContext("2d").drawImage(
+          img, xs[c], ys[r], w, h, 0, 0, w, h
+        );
+        var dataUrl = pieceCanvas.toDataURL("image/png");
+        var idx = r * cCount + c + 1;
+        window._pieces.push({ name: imgName + "_" + idx + ".png", dataUrl: dataUrl });
+
+        var div = document.createElement("div");
+        div.className = "piece";
+        var im = document.createElement("img");
+        im.src = dataUrl;
+        var bar = document.createElement("div");
+        bar.className = "piece-bar";
+        bar.innerHTML = "<span>" + idx + "（" + w + "×" + h + "）</span>";
+        var btn = document.createElement("button");
+        btn.className = "dl";
+        btn.textContent = "下载";
+        (function (piece) {
+          btn.addEventListener("click", function () { downloadPiece(piece); });
+        })({ name: imgName + "_" + idx + ".png", dataUrl: dataUrl });
+        bar.appendChild(btn);
+        div.appendChild(im);
+        div.appendChild(bar);
+        grid.appendChild(div);
+      }
+    }
+    $("resultSection").style.display = "block";
+    $("btnZipLeft").disabled = false;
+    $("resultSection").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    showToast("分割完成，共 " + (rCount * cCount) + " 块");
+  });
+
+  function downloadPiece(piece) {
+    var a = document.createElement("a");
+    a.href = piece.dataUrl;
+    a.download = piece.name;
+    a.click();
+  }
+
+  /* ---------- ZIP 打包（纯前端，无需依赖） ---------- */
+  function downloadZip() {
+    var pieces = window._pieces || [];
+    if (!pieces.length) { showToast("请先分割图片"); return; }
+    try {
+      var zip = makeZip(pieces);
+      var blob = new Blob([zip], { type: "application/zip" });
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = imgName + "_分割结果.zip";
+      a.click();
+      showToast("ZIP 已生成，共 " + pieces.length + " 张");
+    } catch (err) {
+      showToast("打包失败：" + err.message);
+    }
+  }
+  $("btnZipLeft").addEventListener("click", downloadZip);
+  $("btnZip").addEventListener("click", downloadZip);
+
+  function crc32(buf) {
+    var table = crc32._table;
+    if (!table) {
+      table = crc32._table = [];
+      for (var n = 0; n < 256; n++) {
+        var cc = n;
+        for (var k = 0; k < 8; k++) cc = (cc & 1) ? (0xEDB88320 ^ (cc >>> 1)) : (cc >>> 1);
+        table[n] = cc >>> 0;
+      }
+    }
+    var crc = 0xFFFFFFFF;
+    for (var i = 0; i < buf.length; i++) crc = table[(crc ^ buf[i]) & 0xFF] ^ (crc >>> 8);
+    return (crc ^ 0xFFFFFFFF) >>> 0;
+  }
+
+  function dataUrlToBytes(dataUrl) {
+    var b64 = dataUrl.split(",")[1];
+    var bin = atob(b64);
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+
+  function makeZip(files) {
+    var parts = [], central = [], offset = 0;
+    var encoder = new TextEncoder();
+
+    files.forEach(function (f) {
+      var nameBytes = encoder.encode(f.name);
+      var data = dataUrlToBytes(f.dataUrl);
+      var crc = crc32(data);
+
+      var local = new Uint8Array(30 + nameBytes.length);
+      var lv = new DataView(local.buffer);
+      lv.setUint32(0, 0x04034b50, true);
+      lv.setUint16(4, 20, true);           // version
+      lv.setUint16(6, 0x0800, true);       // UTF-8 flag
+      lv.setUint16(8, 0, true);            // store, no compression
+      lv.setUint16(10, 0, true); lv.setUint16(12, 0, true); // time/date
+      lv.setUint32(14, crc, true);
+      lv.setUint32(18, data.length, true);
+      lv.setUint32(22, data.length, true);
+      lv.setUint16(26, nameBytes.length, true);
+      lv.setUint16(28, 0, true);
+      local.set(nameBytes, 30);
+
+      parts.push(local, data);
+
+      var cen = new Uint8Array(46 + nameBytes.length);
+      var cv = new DataView(cen.buffer);
+      cv.setUint32(0, 0x02014b50, true);
+      cv.setUint16(4, 20, true); cv.setUint16(6, 20, true);
+      cv.setUint16(8, 0x0800, true);
+      cv.setUint16(10, 0, true);
+      cv.setUint16(12, 0, true); cv.setUint16(14, 0, true);
+      cv.setUint32(16, crc, true);
+      cv.setUint32(20, data.length, true);
+      cv.setUint32(24, data.length, true);
+      cv.setUint16(28, nameBytes.length, true);
+      cv.setUint32(42, offset, true);
+      cen.set(nameBytes, 46);
+      central.push(cen);
+
+      offset += local.length + data.length;
+    });
+
+    var centralSize = central.reduce(function (s, c) { return s + c.length; }, 0);
+    var end = new Uint8Array(22);
+    var ev = new DataView(end.buffer);
+    ev.setUint32(0, 0x06054b50, true);
+    ev.setUint16(8, files.length, true);
+    ev.setUint16(10, files.length, true);
+    ev.setUint32(12, centralSize, true);
+    ev.setUint32(16, offset, true);
+
+    var total = offset + centralSize + 22;
+    var out = new Uint8Array(total);
+    var pos = 0;
+    parts.concat(central).forEach(function (p) {
+      out.set(p, pos);
+      pos += p.length;
+    });
+    out.set(end, pos);
+    return out;
+  }
+})();
+</script>
+</body>
+</html>
